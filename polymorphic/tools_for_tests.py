@@ -5,6 +5,7 @@
 import uuid
 
 from django import forms
+from django import VERSION as django_version
 from django.db import models
 from django.utils.encoding import smart_unicode
 
@@ -84,7 +85,14 @@ class UUIDField(models.CharField):
 
     def db_type(self, connection):
         from django.conf import settings
-        return UUIDField._CREATE_COLUMN_TYPES.get(settings.DATABASE_ENGINE, "char(%s)" % self.max_length)
+
+	# django version 1.2+ support multiple databases through the settings.DATABASE variable. 
+	# using 'default' for now.
+	if django_version[0] >= 1 and django_version[1] >= 2:
+		
+		return UUIDField._CREATE_COLUMN_TYPES.get(settings.DATABASES['default']['ENGINE'], "char(%s)" % self.max_length)
+	else:
+	        return UUIDField._CREATE_COLUMN_TYPES.get(settings.DATABASE_ENGINE, "char(%s)" % self.max_length)
 
     def to_python(self, value):
         """Return a uuid.UUID instance from the value returned by the database."""
